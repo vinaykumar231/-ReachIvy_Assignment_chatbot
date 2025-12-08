@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HelloIvy | Voice Essay Brainstormer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <div class="logo-icon">H</div>
+                    <span class="logo-text">HelloIvy</span>
+                </div>
+                
+            </div>
+            <div class="header-controls">
+
+                <div class="user-avatar">U</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <div class="two-column-layout">
+            <!-- Left Column - Instructions -->
+            <div class="left-column">
+                <div class="card instructions-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <h2 class="card-title">Instructions</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="instruction-text">
+                            AI career counselor, here to    help you explore exciting career paths, understand what skills you need, and plan.
+                        </p>
+                        <div class="instruction-features">
+                            <div class="feature">
+                                <i class="fas fa-microphone-alt"></i>
+                                <span>Voice-based interaction</span>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-brain"></i>
+                                <span>AI-powered guidance</span>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-project-diagram"></i>
+                                <span>Structured essay outline</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Chat Interface -->
+            <div class="right-column">
+                <div class="chat-container">
+                    <!-- Chat Header -->
+                    <div class="chat-header">
+                        <div class="chat-info">
+                            <h3>
+                                <i class="fas fa-comments"></i>
+                                Conversation with AI Coach
+                            </h3>
+                            <div class="chat-status" id="chatStatus">
+                                <i class="fas fa-circle"></i>
+                                <span id="statusText">Connecting...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages -->
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Messages will be added here -->
+                    </div>
+
+                    <!-- Voice Recording Button -->
+                    <div class="voice-section">
+                        <div class="voice-button-container" id="voiceButton">
+                            <div class="ripple"></div>
+                            <div class="ripple"></div>
+                            <div class="ripple"></div>
+                            
+                            <div class="rainbow-gradient"></div>
+                            
+                            <div class="center-circle">
+                                <div class="voice-bars">
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="voice-status" id="voiceStatus">Tap to speak</div>
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="chat-input-container">
+                        <div class="input-wrapper">
+                            <textarea class="chat-input" 
+                                      id="messageInput" 
+                                      placeholder="Or type your response here..." 
+                                      rows="2"></textarea>
+                            <button class="btn-send" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn-secondary" id="startBtn">
+                        <i class="fas fa-play"></i>
+                        Start Brainstorming
+                    </button>
+                    <button class="btn-secondary" id="restartBtn" style="display: none;">
+                        <i class="fas fa-redo"></i>
+                        Restart Session
+                    </button>
+                    <button class="btn-primary" id="previewBtn" style="display: none;">
+                        <i class="fas fa-eye"></i>
+                        Preview Structure
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Structure Modal -->
+    <div class="modal" id="structureModal">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-project-diagram"></i>
+                    Your Essay Structure
+                </h2>
+                <button class="btn-close" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="structureContent">
+                <!-- Structure will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="downloadBtn">
+                    <i class="fas fa-download"></i>
+                    Download Structure
+                </button>
+                <button class="btn-primary" id="closeModalBtn">
+                    <i class="fas fa-check"></i>
+                    Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Indicator -->
+    <div class="status-indicator" id="statusIndicator">
+        <div class="status-dot"></div>
+        <span id="statusMessage">Ready</span>
+    </div>
+
+    <!-- Voice Indicator -->
+    <div class="voice-indicator" id="voiceIndicator">
+        <div class="voice-wave">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+        </div>
+        <span>Listening... Speak now</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
