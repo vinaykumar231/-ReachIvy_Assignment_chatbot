@@ -89,7 +89,7 @@ CareerGuide AI is an autonomous voice-first platform that helps high school stud
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/careerguide-ai.git
+git https://github.com/vinaykumar231/-ReachIvy_Assignment_chatbot.git
 cd careerguide-ai
 
 # Create virtual environment
