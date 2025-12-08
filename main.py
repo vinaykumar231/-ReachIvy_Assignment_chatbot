@@ -8,7 +8,9 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+from utils.chatbot import CareerGuidanceCounselor
 from websocket_manager import manager
+
 
 # Configure logging
 logging.basicConfig(
@@ -34,42 +36,7 @@ app.add_middleware(
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """
-    Main WebSocket endpoint for career guidance interaction (Session-based - NO AUTH)
     
-    Expected message formats:
-    
-    1. Initialize connection (first message):
-       {"type": "connect"}
-       -> Server responds with session_id
-    
-    2. Send text message:
-       {"type": "text", "message": "I'm interested in technology careers"}
-    
-    3. Send audio (base64):
-       {"type": "audio", "data": "base64_audio_data", "format": "webm"}
-    
-    4. Request career exploration:
-       {"type": "explore_careers", "interests": ["technology", "design"]}
-    
-    5. Request career comparison:
-       {"type": "compare_careers", "career1": "Software Engineer", "career2": "Data Scientist"}
-    
-    6. Get conversation history:
-       {"type": "history"}
-    
-    7. Get student profile:
-       {"type": "profile"}
-    
-    8. Get stats:
-       {"type": "stats"}
-    
-    9. Clear conversation:
-       {"type": "clear"}
-    
-    10. Ping:
-        {"type": "ping"}
-    """
     session_id = None
     
     try:
@@ -80,7 +47,9 @@ async def websocket_endpoint(websocket: WebSocket):
         initial_msg = json.loads(initial_data)
         
         session_id = manager.generate_session_id()
-        await manager.connect(websocket, session_id)
+        
+        counselor = CareerGuidanceCounselor(session_id)
+        manager.connect_counselor(websocket, session_id, counselor)
         
         await manager.send_message(session_id, {
             "type": "connected",
@@ -124,6 +93,16 @@ async def websocket_endpoint(websocket: WebSocket):
                         })
                         continue
                     
+                    # Check if user is requesting a plan
+                    plan_keywords = [
+                        'create a career plan', 'generate career plan', 'make a plan',
+                        'career plan', 'detailed plan', 'comprehensive plan',
+                        'roadmap', 'structured plan', 'request plan', 'get plan'
+                    ]
+                    
+                    lower_text = user_text.lower()
+                    is_plan_request = any(keyword in lower_text for keyword in plan_keywords)
+                    
                     # Show thinking status
                     await manager.send_message(session_id, {
                         "type": "status",
@@ -131,20 +110,117 @@ async def websocket_endpoint(websocket: WebSocket):
                         "message": "AI is analyzing your response..."
                     })
                     
-                    response_text, audio_base64, metadata = await counselor.process_response(user_text)
+                    if is_plan_request:
+                        # Check if we have enough conversation
+                        stats = counselor.get_stats()
+                        user_responses = stats.get("user_messages", 0)
+                        
+                        if user_responses < 3:
+                            await manager.send_message(session_id, {
+                                "type": "response",
+                                "text": "I'd love to create a career plan for you! First, I need to know a bit more about you. Could you tell me:\n1. What grade are you in?\n2. What subjects do you enjoy?\n3. What are your hobbies or interests?",
+                                "phase": stats.get("current_phase", "discovery"),
+                                "language": stats.get("current_language", "en"),
+                                "timestamp": datetime.now().isoformat()
+                            })
+                        else:
+                            # Process as regular message first, then generate plan
+                            response_text, audio_base64, metadata = await counselor.process_response(user_text)
+                            
+                            # Send initial response
+                            await manager.send_message(session_id, {
+                                "type": "response",
+                                "text": response_text,
+                                "audio": audio_base64,
+                                "phase": stats.get("current_phase", "discovery"),
+                                "language": stats.get("current_language", "en"),
+                                "metadata": metadata,
+                                "timestamp": datetime.now().isoformat()
+                            })
+                            
+                            # Then generate and send plan
+                            await manager.send_message(session_id, {
+                                "type": "status",
+                                "status": "planning",
+                                "message": "Generating your comprehensive career plan..."
+                            })
+                            
+                            career_plan, plan_message = await counselor.generate_career_plan()
+                            
+                            if career_plan:
+                                await manager.send_message(session_id, {
+                                    "type": "plan_generated",
+                                    "text": plan_message,
+                                    "plan": career_plan,
+                                    "timestamp": datetime.now().isoformat()
+                                })
+                            else:
+                                await manager.send_message(session_id, {
+                                    "type": "response",
+                                    "text": plan_message,
+                                    "timestamp": datetime.now().isoformat()
+                                })
+                    else:
+                        # Regular message processing
+                        response_text, audio_base64, metadata = await counselor.process_response(user_text)
+                        
+                        stats = counselor.get_stats()
+                        
+                        await manager.send_message(session_id, {
+                            "type": "response",
+                            "text": response_text,
+                            "audio": audio_base64,
+                            "audio_format": "mp3",
+                            "phase": stats.get("current_phase", "discovery"),
+                            "language": stats.get("current_language", "en"),
+                            "metadata": metadata,
+                            "timestamp": datetime.now().isoformat()
+                        })
+                
+                elif msg_type == "request_plan":  # NEW MESSAGE TYPE
+                    counselor = manager.get_counselor(session_id)
+                    if not counselor:
+                        await manager.send_message(session_id, {
+                            "type": "error",
+                            "message": "AI Career Counselor not initialized"
+                        })
+                        continue
                     
+                    # Check if we have enough conversation
                     stats = counselor.get_stats()
+                    user_responses = stats.get("user_messages", 0)
+                    
+                    if user_responses < 3:
+                        await manager.send_message(session_id, {
+                            "type": "response",
+                            "text": "I'd love to create a career plan for you! First, I need to know a bit more about you. Could you tell me:\n1. What grade are you in?\n2. What subjects do you enjoy?\n3. What are your hobbies or interests?",
+                            "phase": stats.get("current_phase", "discovery"),
+                            "language": stats.get("current_language", "en"),
+                            "timestamp": datetime.now().isoformat()
+                        })
+                        continue
                     
                     await manager.send_message(session_id, {
-                        "type": "response",
-                        "text": response_text,
-                        "audio": audio_base64,
-                        "audio_format": "mp3",
-                        "phase": stats.get("current_phase", "discovery"),
-                        "language": stats.get("current_language", "en"),
-                        "metadata": metadata,
-                        "timestamp": datetime.now().isoformat()
+                        "type": "status",
+                        "status": "planning",
+                        "message": "Generating your comprehensive career plan..."
                     })
+                    
+                    career_plan, plan_message = await counselor.generate_career_plan()
+                    
+                    if career_plan:
+                        await manager.send_message(session_id, {
+                            "type": "plan_generated",
+                            "text": plan_message,
+                            "plan": career_plan,
+                            "timestamp": datetime.now().isoformat()
+                        })
+                    else:
+                        await manager.send_message(session_id, {
+                            "type": "response",
+                            "text": plan_message,
+                            "timestamp": datetime.now().isoformat()
+                        })
                 
                 elif msg_type == "audio":
                     counselor = manager.get_counselor(session_id)
@@ -300,8 +376,9 @@ async def websocket_endpoint(websocket: WebSocket):
                         "type": "error",
                         "message": f"Unknown message type: {msg_type}",
                         "supported_types": [
-                            "ping", "text", "audio", "explore_careers",
-                            "compare_careers", "history", "profile", "stats", "clear"
+                            "ping", "text", "audio", "request_plan",  # Added request_plan
+                            "explore_careers", "compare_careers", 
+                            "history", "profile", "stats", "clear"
                         ]
                     })
             
@@ -335,6 +412,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 
+
+
 # ==================== RUN SERVER ====================
 
 if __name__ == "__main__":
@@ -343,5 +422,4 @@ if __name__ == "__main__":
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", 8000))
     
-    
-    uvicorn.run( "main:app",host=host,port=port,reload=True)
+    uvicorn.run("main:app", host=host, port=port, reload=True)

@@ -37,6 +37,7 @@ class UserIntent:
     READY_TO_START = "ready_to_start"
     REQUEST_EXAMPLES = "request_examples"
     GENERAL_QUESTION = "general_question"
+    REQUEST_PLAN = "request_plan"
 
 
 class CareerGuidanceCounselor:
@@ -50,7 +51,7 @@ class CareerGuidanceCounselor:
         genai.configure(api_key=api_key)
         
         self.model = genai.GenerativeModel(
-            "gemini-2.5-flash-lite",
+            "gemini-robotics-er-1.5-preview",
             generation_config={
                 "temperature": 0.7,
                 "max_output_tokens": 3000
@@ -62,17 +63,24 @@ class CareerGuidanceCounselor:
         self.conversation: List[Dict] = []
         self.discovery_started = False
         self.exploration_completed = False
+        self.plan_generated = False
         self.current_language = "en"
         self.current_phase = "initial"  # initial, discovery, exploration, deep_dive, planning
         
         # Student profile data
         self.student_profile = {
             "grade": None,
+            "age_range": None,
+            "location": None,
             "interests": [],
             "strengths": [],
             "constraints": [],
-            "selected_career": None
+            "selected_career": None,
+            "learning_style": None
         }
+        
+        # Career plan data
+        self.career_plan = None
         
         logger.info(f" CareerGuidanceCounselor initialized for session {session_id}")
     
@@ -313,6 +321,288 @@ class CareerGuidanceCounselor:
         }
         return fallbacks.get(self.current_language, fallbacks["en"])
     
+    # ==================== CAREER PLAN GENERATION ====================
+    
+    async def generate_career_plan(self) -> Tuple[Dict, str]:
+        """
+        Generate comprehensive career plan JSON based on entire conversation
+        Returns: (career_plan_dict, message_to_user)
+        """
+        try:
+            logger.info(" Generating comprehensive career plan...")
+            
+            # Check if we have enough information
+            user_responses = len([m for m in self.conversation if m['role'] == 'user'])
+            if user_responses < 5:
+                message = self._get_insufficient_info_message()
+                return None, message
+            
+            # Prepare context and profile
+            context = CareerGuidancePrompts.build_context_prompt(self.conversation)
+            
+            # Extract profile from conversation
+            profile = self._extract_profile_from_conversation()
+            
+            # Use your existing prompt
+            prompt = CareerGuidancePrompts.COMPLETE_CAREER_PLAN_JSON.format(
+                context=context,
+                student_id=self.session_id,
+                grade=profile.get("grade", "Not specified"),
+                interests=", ".join(profile.get("interests", ["exploring"])),
+                strengths=", ".join(profile.get("strengths", ["to be discovered"])),
+                constraints=", ".join(profile.get("constraints", ["none"])),
+                target_career=profile.get("selected_career", "To be determined")
+            )
+            
+            # Generate response
+            response = await asyncio.to_thread(self.model.generate_content, prompt)
+            result_text = response.text.strip()
+            
+            # Extract JSON from response
+            json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
+            if json_match:
+                try:
+                    career_plan = json.loads(json_match.group())
+                    
+                    # Validate and clean the JSON
+                    career_plan = self._validate_career_plan(career_plan)
+                    
+                    # Update student profile with extracted info
+                    if "student_profile" in career_plan:
+                        self.student_profile.update(career_plan["student_profile"])
+                    
+                    # Save the plan
+                    self.career_plan = career_plan
+                    self.plan_generated = True
+                    self.current_phase = "planning"
+                    
+                    # Generate user message
+                    message = self._get_plan_generated_message(career_plan)
+                    
+                    logger.info(" Career plan generated successfully!")
+                    return career_plan, message
+                    
+                except json.JSONDecodeError as e:
+                    logger.error(f" JSON parsing error: {e}")
+                    fallback_plan = self._generate_fallback_plan()
+                    self.career_plan = fallback_plan
+                    self.plan_generated = True
+                    message = self._get_plan_generated_message(fallback_plan)
+                    return fallback_plan, message
+            else:
+                # Fallback if no JSON found
+                logger.warning(" No JSON found in response, using fallback plan")
+                fallback_plan = self._generate_fallback_plan()
+                self.career_plan = fallback_plan
+                self.plan_generated = True
+                message = self._get_plan_generated_message(fallback_plan)
+                return fallback_plan, message
+                
+        except Exception as e:
+            logger.error(f" Career plan generation failed: {e}")
+            message = self._get_plan_error_message()
+            return None, message
+    
+    def _extract_profile_from_conversation(self) -> Dict:
+        """Extract student profile from conversation history"""
+        profile = {
+            "grade": self.student_profile.get("grade"),
+            "age_range": None,
+            "location": None,
+            "interests": self.student_profile.get("interests", []),
+            "strengths": self.student_profile.get("strengths", []),
+            "constraints": self.student_profile.get("constraints", []),
+            "selected_career": self.student_profile.get("selected_career"),
+            "learning_style": None
+        }
+        
+        # Try to extract more info from conversation
+        for message in self.conversation:
+            if message['role'] == 'user':
+                content = message['content'].lower()
+                
+                # Extract grade
+                if not profile["grade"]:
+                    grade_patterns = [
+                        r'grade (\d+|1[0-2])',
+                        r'class (\d+|1[0-2])',
+                        r'(\d+)(?:th|st|nd|rd) grade',
+                        r'(\d+)(?:th|st|nd|rd) class'
+                    ]
+                    for pattern in grade_patterns:
+                        match = re.search(pattern, content)
+                        if match:
+                            profile["grade"] = match.group(1)
+                            break
+                
+                # Extract location hints
+                if not profile["location"]:
+                    location_patterns = [
+                        r'from (mumbai|delhi|bangalore|chennai|kolkata|pune|hyderabad|ahmedabad)',
+                        r'in (mumbai|delhi|bangalore|chennai|kolkata|pune|hyderabad|ahmedabad)',
+                        r'living in (\w+)',
+                        r'located in (\w+)'
+                    ]
+                    for pattern in location_patterns:
+                        match = re.search(pattern, content)
+                        if match:
+                            profile["location"] = match.group(1).title()
+                            break
+                
+                # Extract learning style hints
+                if not profile["learning_style"]:
+                    if any(word in content for word in ['video', 'watch', 'visual', 'diagram']):
+                        profile["learning_style"] = "visual"
+                    elif any(word in content for word in ['hands', 'practical', 'doing', 'practice']):
+                        profile["learning_style"] = "kinesthetic"
+                    elif any(word in content for word in ['listen', 'audio', 'podcast', 'hear']):
+                        profile["learning_style"] = "auditory"
+        
+        return profile
+    
+    def _validate_career_plan(self, career_plan: Dict) -> Dict:
+        """Validate and clean the career plan JSON"""
+        # Ensure all required sections exist
+        required_sections = [
+            "student_profile", "career_recommendation", "education_path",
+            "skill_development_roadmap", "application_timeline", 
+            "financial_planning", "success_metrics"
+        ]
+        
+        for section in required_sections:
+            if section not in career_plan:
+                career_plan[section] = {}
+        
+        # Add session metadata
+        career_plan["metadata"] = {
+            "session_id": self.session_id,
+            "generated_at": datetime.now().isoformat(),
+            "conversation_messages": len(self.conversation)
+        }
+        
+        return career_plan
+    
+    def _generate_fallback_plan(self) -> Dict:
+        """Generate a fallback career plan if AI generation fails"""
+        profile = self._extract_profile_from_conversation()
+        
+        return {
+            "student_profile": {
+                "grade": profile.get("grade", "10th"),
+                "age_range": "15-17",
+                "location": profile.get("location", "Urban India"),
+                "interests": profile.get("interests", ["Technology", "Problem Solving"]),
+                "strengths": profile.get("strengths", ["Analytical Thinking", "Creativity"]),
+                "constraints": profile.get("constraints", ["Budget constraints"]),
+                "learning_style": profile.get("learning_style", "mixed")
+            },
+            "career_recommendation": {
+                "primary_career": "Software Engineering",
+                "alternative_careers": ["Data Science", "Product Management", "UX Design"],
+                "rationale": "Based on your analytical skills and interest in technology",
+                "alignment_score": 8
+            },
+            "education_path": {
+                "recommended_degree": "B.Tech in Computer Science",
+                "duration_years": 4,
+                "entrance_exams": ["JEE Main", "JEE Advanced", "State CETs"],
+                "top_institutions_india": [
+                    {
+                        "name": "IIT Bombay",
+                        "location": "Mumbai",
+                        "program": "B.Tech CSE",
+                        "fees_total_inr": 200000,
+                        "placement_avg_inr_lakhs": 25
+                    }
+                ],
+                "abroad_options": []
+            },
+            "skill_development_roadmap": {
+                "current_skills": ["Basic Programming", "Logical Thinking"],
+                "priority_1_immediate": [
+                    {
+                        "skill": "Python Programming",
+                        "why": "Foundation for data science and AI",
+                        "resource": "Codecademy Python Course",
+                        "timeline_weeks": 8
+                    }
+                ],
+                "priority_2_short_term": [],
+                "priority_3_long_term": [],
+                "projects_to_build": [
+                    {
+                        "project_name": "Simple Calculator App",
+                        "skills_demonstrated": ["Python", "Problem Solving"],
+                        "timeline_weeks": 2,
+                        "difficulty": "beginner"
+                    }
+                ]
+            },
+            "application_timeline": {
+                "current_date": datetime.now().strftime("%Y-%m"),
+                "key_milestones": [
+                    {
+                        "date": datetime.now().strftime("%Y-%m"),
+                        "action": "Start Python learning course",
+                        "deadline": "Next month"
+                    }
+                ]
+            },
+            "financial_planning": {
+                "total_education_cost_inr": 2000000,
+                "scholarship_opportunities": [
+                    {
+                        "name": "KVPY Scholarship",
+                        "amount_inr": 60000,
+                        "eligibility": "Class 12 Science students",
+                        "deadline": "August"
+                    }
+                ],
+                "education_loan_options": []
+            },
+            "success_metrics": {
+                "career_match_confidence": 7,
+                "information_completeness": 70,
+                "readiness_for_application": 40,
+                "missing_research": ["Specific college preferences", "Financial planning details"]
+            },
+            "metadata": {
+                "session_id": self.session_id,
+                "generated_at": datetime.now().isoformat(),
+                "conversation_messages": len(self.conversation),
+                "note": "Fallback plan generated due to AI limitations"
+            }
+        }
+    
+    def _get_insufficient_info_message(self) -> str:
+        """Message when insufficient info for career plan"""
+        messages = {
+            "en": "I need a bit more information to create a comprehensive career plan for you. Could you tell me more about your interests and goals?",
+            "hi": "आपके लिए एक व्यापक करियर योजना बनाने के लिए मुझे थोड़ी और जानकारी चाहिए। क्या आप अपनी रुचियों और लक्ष्यों के बारे में और बता सकते हैं?",
+            "hinglish": "Aapke liye ek comprehensive career plan banane ke liye mujhe thodi aur information chahiye. Kya aap apni interests aur goals ke baare mein aur bata sakte ho?"
+        }
+        return messages.get(self.current_language, messages["en"])
+    
+    def _get_plan_generated_message(self, career_plan: Dict) -> str:
+        """Message when plan is successfully generated"""
+        primary_career = career_plan.get("career_recommendation", {}).get("primary_career", "a technology career")
+        
+        messages = {
+            "en": f"✅ I've created a comprehensive career plan for you! I recommend **{primary_career}** as your primary path. The plan includes education requirements, skill development roadmap, financial planning, and application timeline. You can download it as a PDF or view the details here.",
+            "hi": f"✅ मैंने आपके लिए एक व्यापक करियर योजना बनाई है! मैं **{primary_career}** को आपके प्राथमिक मार्ग के रूप में सलाह देता हूँ। योजना में शिक्षा आवश्यकताएं, कौशल विकास रोडमैप, वित्तीय योजना और आवेदन समय सारणी शामिल है। आप इसे PDF के रूप में डाउनलोड कर सकते हैं या विवरण यहाँ देख सकते हैं।",
+            "hinglish": f"✅ Maine aapke liye ek comprehensive career plan banayi hai! Main **{primary_career}** ko aapke primary path ke taur par recommend karta hoon. Plan mein education requirements, skill development roadmap, financial planning, aur application timeline shamil hai. Aap ise PDF ke roop mein download kar sakte ho ya details yahan dekh sakte ho."
+        }
+        return messages.get(self.current_language, messages["en"])
+    
+    def _get_plan_error_message(self) -> str:
+        """Error message for plan generation failure"""
+        messages = {
+            "en": "I encountered an issue generating your career plan. Let's continue our conversation to gather more information, then try again.",
+            "hi": "आपकी करियर योजना बनाते समय मुझे एक समस्या आई। आइए अधिक जानकारी एकत्र करने के लिए अपनी बातचीत जारी रखें, फिर पुनः प्रयास करें।",
+            "hinglish": "Aapki career plan banate samay mujhe ek issue aaya. Chalo aur information gather karne ke liye apni baatcheet jari rakhein, phir try karte hain."
+        }
+        return messages.get(self.current_language, messages["en"])
+    
     # ==================== UNCERTAINTY HANDLER ====================
     
     async def _handle_uncertainty(self, user_input: str) -> str:
@@ -391,6 +681,54 @@ class CareerGuidanceCounselor:
             }
             return fallbacks.get(self.current_language, fallbacks["en"])
     
+    # ==================== PLAN REQUEST HANDLER ====================
+    
+    async def _handle_plan_request(self, user_input: str) -> str:
+        """Handle requests for career plan"""
+        # Check if we already have a plan
+        if self.plan_generated and self.career_plan:
+            return self._get_existing_plan_message()
+        
+        # Check if we have enough information
+        user_responses = len([m for m in self.conversation if m['role'] == 'user'])
+        
+        if user_responses < 5:
+            return self._get_need_more_info_message()
+        
+        # Generate the plan
+        career_plan, message = await self.generate_career_plan()
+        
+        if career_plan:
+            # Add the plan message to conversation
+            self.conversation.append({
+                "role": "assistant",
+                "content": message,
+                "plan_generated": True,
+                "timestamp": datetime.now().isoformat()
+            })
+        
+        return message
+    
+    def _get_existing_plan_message(self) -> str:
+        """Message when plan already exists"""
+        primary_career = self.career_plan.get("career_recommendation", {}).get("primary_career", "your chosen career")
+        
+        messages = {
+            "en": f"I've already created a career plan for you focusing on **{primary_career}**. Would you like me to share it again or update it with new information?",
+            "hi": f"मैंने पहले ही **{primary_career}** पर केंद्रित आपके लिए एक करियर योजना बनाई है। क्या आप चाहेंगे कि मैं इसे फिर से साझा करूं या नई जानकारी के साथ इसे अपडेट करूं?",
+            "hinglish": f"Maine pehle hi **{primary_career}** par focus karte hue aapke liye ek career plan banayi hai. Kya aap chahte ho ki main ise phir se share karoon ya nayi information ke saath ise update karoon?"
+        }
+        return messages.get(self.current_language, messages["en"])
+    
+    def _get_need_more_info_message(self) -> str:
+        """Message when more info is needed for plan"""
+        messages = {
+            "en": "I'd love to create a comprehensive career plan for you! First, I need to know a bit more about you. Could you tell me about your academic interests, hobbies, and any career fields you're curious about?",
+            "hi": "मैं आपके लिए एक व्यापक करियर योजना बनाना चाहूंगा! पहले, मुझे आपके बारे में थोड़ा और जानना होगा। क्या आप मुझे अपनी शैक्षिक रुचियों, शौक और किसी भी करियर क्षेत्र के बारे में बता सकते हैं जिसके बारे में आप उत्सुक हैं?",
+            "hinglish": "Main aapke liye ek comprehensive career plan banana chahta hoon! Pehle, mujhe aapke baare mein thoda aur jaanna hoga. Kya aap mujhe apni academic interests, hobbies, aur kisi bhi career field ke baare mein bata sakte ho jiske baare mein aap curious ho?"
+        }
+        return messages.get(self.current_language, messages["en"])
+    
     # ==================== MAIN PROCESSING ====================
     
     async def process_response(self, user_input: str) -> Tuple[str, Optional[str], Optional[Dict]]:
@@ -435,7 +773,12 @@ class CareerGuidanceCounselor:
             response = ""
             metadata = None
             
-            if intent == UserIntent.GREETING and not self.discovery_started:
+            if intent == UserIntent.REQUEST_PLAN:
+                # Handle career plan request
+                response = await self._handle_plan_request(user_input)
+                metadata = {"plan_requested": True}
+                
+            elif intent == UserIntent.GREETING and not self.discovery_started:
                 # First greeting
                 response = await self._handle_first_message(user_input)
                 self.discovery_started = True
@@ -578,20 +921,29 @@ class CareerGuidanceCounselor:
         """Get full conversation history"""
         return self.conversation
     
+    def get_career_plan(self) -> Optional[Dict]:
+        """Get generated career plan"""
+        return self.career_plan
+    
     def clear_conversation(self):
         """Reset conversation"""
         self.conversation = []
         self.discovery_started = False
         self.exploration_completed = False
+        self.plan_generated = False
         self.current_language = "en"
         self.current_phase = "initial"
         self.student_profile = {
             "grade": None,
+            "age_range": None,
+            "location": None,
             "interests": [],
             "strengths": [],
             "constraints": [],
-            "selected_career": None
+            "selected_career": None,
+            "learning_style": None
         }
+        self.career_plan = None
         logger.info(" Conversation cleared")
     
     def get_stats(self) -> Dict:
@@ -607,8 +959,7 @@ class CareerGuidanceCounselor:
             "discovery_started": self.discovery_started,
             "current_phase": self.current_phase,
             "current_language": self.current_language,
+            "plan_generated": self.plan_generated,
             "student_profile": self.student_profile,
             "last_interaction": self.conversation[-1]['timestamp'] if self.conversation else None
         }
-
-

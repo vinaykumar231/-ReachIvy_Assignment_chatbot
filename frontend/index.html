@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HelloIvy | Voice Essay Brainstormer</title>
+    <title>HelloIvy | AI Career Counselor</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -16,10 +16,13 @@
                     <div class="logo-icon">H</div>
                     <span class="logo-text">HelloIvy</span>
                 </div>
-                
+
             </div>
             <div class="header-controls">
-
+                <button class="btn-header" id="statsBtn">
+                    <i class="fas fa-chart-bar"></i>
+                    <span id="timer">00:00</span>
+                </button>
                 <div class="user-avatar">U</div>
             </div>
         </div>
@@ -27,39 +30,148 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        
+        <!-- Progress Bar -->
+        <!-- <div class="progress-container">
+            <div class="progress-stats">
+                <div class="question-count" id="questionCount">0 questions answered</div>
+                <div class="timer-display" id="timerDisplay">00:00</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div> -->
+
         <div class="two-column-layout">
             <!-- Left Column - Instructions -->
-            <div class="left-column">
-                <div class="card instructions-card">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <h2 class="card-title">Instructions</h2>
+           <div class="left-column">
+    <div class="card instructions-card">
+        <div class="card-header">
+            <div class="card-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h2 class="card-title">How it Works</h2>
+        </div>
+        <div class="card-body">
+            <p class="instruction-text">
+                I'm your AI career counselor, here to help you explore exciting career paths, 
+                understand what skills you need, and create a personalized career plan.
+            </p>
+            
+            <div class="instruction-features">
+                <div class="feature">
+                    <i class="fas fa-microphone-alt"></i>
+                    <span>Voice or text input</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Career exploration</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-road"></i>
+                    <span>Personalized roadmap</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Downloadable plan</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Brainstorm ideas</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Career path analysis</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Interest matching</span>
+                </div>
+                <!-- <div class="feature">
+                    <i class="fas fa-search"></i>
+                    <span>Industry research</span>
+                </div> -->
+                <div class="feature">
+                    <i class="fas fa-tools"></i>
+                    <span>Skill gap analysis</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-university"></i>
+                    <span>Education guidance</span>
+                </div>
+                <!-- <div class="feature">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Job market insights</span>
+                </div> -->
+                <!-- <div class="feature">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Progress tracking</span>
+                </div> -->
+            </div>
+            
+            <div class="capabilities-section" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-light);">
+                <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--text-primary);">
+                    <i class="fas fa-robot"></i> AI Counselor Capabilities
+                </h3>
+                <div class="capabilities-list">
+                    <div class="capability-item">
+                        <i class="fas fa-comments" style="color: var(--primary-color);"></i>
+                        <span>Ask anything career-related</span>
                     </div>
-                    <div class="card-body">
-                        <p class="instruction-text">
-                            AI career counselor, here to    help you explore exciting career paths, understand what skills you need, and plan.
-                        </p>
-                        <div class="instruction-features">
-                            <div class="feature">
-                                <i class="fas fa-microphone-alt"></i>
-                                <span>Voice-based interaction</span>
-                            </div>
-                            <div class="feature">
-                                <i class="fas fa-brain"></i>
-                                <span>AI-powered guidance</span>
-                            </div>
-                            <div class="feature">
-                                <i class="fas fa-project-diagram"></i>
-                                <span>Structured essay outline</span>
-                            </div>
-                        </div>
+                    <div class="capability-item">
+                        <i class="fas fa-brain" style="color: var(--primary-color);"></i>
+                        <span>Brainstorm career options</span>
                     </div>
+                    <div class="capability-item">
+                        <i class="fas fa-puzzle-piece" style="color: var(--primary-color);"></i>
+                        <span>Interest & personality matching</span>
+                    </div>
+                    <div class="capability-item">
+                        <i class="fas fa-cogs" style="color: var(--primary-color);"></i>
+                        <span>Skill assessment & development</span>
+                    </div>
+                    <div class="capability-item">
+                        <i class="fas fa-graduation-cap" style="color: var(--primary-color);"></i>
+                        <span>Education & certification advice</span>
+                    </div>
+                    <div class="capability-item">
+                        <i class="fas fa-network-wired" style="color: var(--primary-color);"></i>
+                        <span>Industry trends & insights</span>
+                    </div>
+                    <!-- <div class="capability-item">
+                        <i class="fas fa-chart-bar" style="color: var(--primary-color);"></i>
+                        <span>Salary & growth projections</span>
+                    </div> -->
+                    <div class="capability-item">
+                        <i class="fas fa-file-alt" style="color: var(--primary-color);"></i>
+                        <span>Create detailed career reports</span>
+                    </div>
+                    <div class="capability-item">
+                        <i class="fas fa-eye" style="color: var(--primary-color);"></i>
+                        <span>View progress & analytics</span>
+                    </div>
+                    <!-- <div class="capability-item">
+                        <i class="fas fa-calendar-alt" style="color: var(--primary-color);"></i>
+                        <span>Timeline planning</span>
+                    </div> -->
+                    <!-- <div class="capability-item">
+                        <i class="fas fa-handshake" style="color: var(--primary-color);"></i>
+                        <span>Interview preparation</span>
+                    </div> -->
+                    <!-- <div class="capability-item">
+                        <i class="fas fa-tasks" style="color: var(--primary-color);"></i>
+                        <span>Actionable step-by-step plans</span>
+                    </div> -->
                 </div>
             </div>
-
+            
+            
+            <div class="student-profile" id="studentProfile" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-light);">
+                <h3 style="font-size: 1rem; margin-bottom: 10px;">Your Profile</h3>
+                <div class="profile-details" id="profileDetails"></div>
+            </div>
+        </div>
+    </div>
+</div>
             <!-- Right Column - Chat Interface -->
             <div class="right-column">
                 <div class="chat-container">
@@ -68,7 +180,7 @@
                         <div class="chat-info">
                             <h3>
                                 <i class="fas fa-comments"></i>
-                                Conversation with AI Coach
+                                AI Career Counselor
                             </h3>
                             <div class="chat-status" id="chatStatus">
                                 <i class="fas fa-circle"></i>
@@ -122,45 +234,74 @@
                 <div class="action-buttons">
                     <button class="btn-secondary" id="startBtn">
                         <i class="fas fa-play"></i>
-                        Start Brainstorming
+                        Start Career Discovery
                     </button>
                     <button class="btn-secondary" id="restartBtn" style="display: none;">
                         <i class="fas fa-redo"></i>
                         Restart Session
                     </button>
-                    <button class="btn-primary" id="previewBtn" style="display: none;">
-                        <i class="fas fa-eye"></i>
-                        Preview Structure
+                    <button class="btn-primary" id="planBtn" style="display: none;">
+                        <i class="fas fa-file-alt"></i>
+                        Generate Career Plan
                     </button>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Structure Modal -->
-    <div class="modal" id="structureModal">
+    <!-- Career Plan Modal -->
+    <div class="modal" id="planModal">
         <div class="modal-overlay" id="modalOverlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">
-                    <i class="fas fa-project-diagram"></i>
-                    Your Essay Structure
+                    <i class="fas fa-graduation-cap"></i>
+                    Your Career Development Plan
                 </h2>
                 <button class="btn-close" id="closeModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body" id="structureContent">
-                <!-- Structure will be populated here -->
+            <div class="modal-body" id="planContent">
+                <!-- Career plan will be populated here -->
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" id="downloadBtn">
+                <button class="btn-secondary" id="downloadPlanBtn">
                     <i class="fas fa-download"></i>
-                    Download Structure
+                    Download as JSON
+                </button>
+                <button class="btn-secondary" id="downloadPDFBtn">
+                    <i class="fas fa-file-pdf"></i>
+                    Download as PDF
                 </button>
                 <button class="btn-primary" id="closeModalBtn">
                     <i class="fas fa-check"></i>
                     Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div class="modal" id="statsModal">
+        <div class="modal-overlay" id="statsModalOverlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Session Statistics
+                </h2>
+                <button class="btn-close" id="closeStatsModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="statsContent">
+                <!-- Stats will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="closeStatsBtn">
+                    <i class="fas fa-check"></i>
+                    Close
                 </button>
             </div>
         </div>

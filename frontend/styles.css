@@ -186,6 +186,11 @@ body {
     color: var(--text-secondary);
 }
 
+.timer-display {
+    font-family: monospace;
+    color: var(--text-secondary);
+}
+
 .progress-bar {
     height: 8px;
     background: var(--border-light);
@@ -264,6 +269,30 @@ body {
 
 .feature i {
     color: var(--primary-blue);
+}
+
+/* Student Profile in Sidebar */
+.student-profile {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+}
+
+.profile-details {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.profile-details div {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+.profile-details strong {
+    color: var(--primary-blue);
+    margin-right: 0.5rem;
 }
 
 /* Chat Container */
@@ -650,7 +679,11 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
-/* Modal */
+.btn-primary.loading {
+    animation: pulse 1.5s infinite;
+}
+
+/* Modals */
 .modal {
     display: none;
     position: fixed;
@@ -726,7 +759,15 @@ body {
     padding: 2rem;
 }
 
-.structure-section {
+.modal-footer {
+    padding: 2rem;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    gap: 1rem;
+}
+
+/* Plan Modal Styles */
+.plan-section {
     background: white;
     border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
@@ -734,56 +775,209 @@ body {
     margin-bottom: 1.5rem;
 }
 
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.section-title {
+.plan-section h3 {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--primary-blue);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.section-word-count {
-    background: var(--accent-pink);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-full);
-    font-size: 0.875rem;
-}
-
-.section-purpose {
-    color: var(--text-secondary);
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
     margin-bottom: 1rem;
 }
 
-.key-points {
-    list-style: none;
-    padding: 0;
+.profile-grid div {
+    padding: 0.5rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
 }
 
-.key-points li {
-    padding: 0.5rem 0;
-    padding-left: 1.5rem;
+.interests, .strengths {
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: var(--radius-md);
+    margin: 0.5rem 0;
+}
+
+.recommendation {
+    padding: 1rem;
+    background: linear-gradient(135deg, #fdf4ff 0%, #fce7f3 100%);
+    border-radius: var(--radius-md);
+}
+
+.primary-career {
+    margin-bottom: 1rem;
+}
+
+.primary-career h4 {
+    color: var(--primary-purple);
+    margin-bottom: 0.5rem;
+}
+
+.score {
+    display: inline-block;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+}
+
+.rationale, .alternatives {
+    margin: 0.75rem 0;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: var(--radius-md);
+}
+
+.institution-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.institution {
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+}
+
+.skill-item, .project {
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+}
+
+.priority, .projects {
+    margin: 1rem 0;
+}
+
+.financial {
+    padding: 1rem;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-radius: var(--radius-md);
+}
+
+.scholarships {
+    margin-top: 1rem;
+}
+
+.scholarship {
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+}
+
+.metric-bar {
+    margin: 1rem 0;
+}
+
+.metric-bar span {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.bar-bg {
+    height: 24px;
+    background: var(--border-light);
+    border-radius: var(--radius-full);
+    overflow: hidden;
     position: relative;
 }
 
-.key-points li::before {
-    content: '→';
-    position: absolute;
-    left: 0;
-    color: var(--primary-blue);
+.bar-fill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-full);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 1s ease;
 }
 
-.modal-footer {
-    padding: 2rem;
-    border-top: 1px solid var(--border-light);
-    display: flex;
+.missing-research {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: var(--radius-md);
+}
+
+.missing-research ul {
+    margin: 0.5rem 0 0 1.5rem;
+    color: var(--text-secondary);
+}
+
+.missing-research li {
+    margin: 0.25rem 0;
+}
+
+/* Stats Modal Styles */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.stats-details {
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+}
+
+.stats-details h3 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.stats-details p {
+    margin: 0.5rem 0;
+    color: var(--text-secondary);
+}
+
+.student-profile-stats {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--radius-md);
 }
 
 /* Status Indicator */
@@ -833,6 +1027,10 @@ body {
     background: #ef4444;
 }
 
+.status-indicator.connected .status-dot {
+    background: #10b981;
+}
+
 /* Voice Indicator */
 .voice-indicator {
     position: fixed;
@@ -849,7 +1047,7 @@ body {
     z-index: 999;
 }
 
-.voice-indicator.active {
+.voice-indicator.show {
     display: flex;
 }
 
@@ -888,7 +1086,8 @@ body {
     .header-content {
         flex-direction: column;
         gap: 1rem;
-    }a
+        text-align: center;
+    }
     
     .action-buttons {
         flex-direction: column;
@@ -896,5 +1095,126 @@ body {
     
     .modal-content {
         width: 95%;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-footer button {
+        width: 100%;
+    }
+    
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .message-content {
+        max-width: 85%;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 1rem;
+    }
+    
+    .chat-messages {
+        padding: 1rem;
+    }
+    
+    .voice-button-container {
+        width: 140px;
+        height: 140px;
+    }
+    
+    .center-circle {
+        inset: 20px;
+    }
+    
+    .status-indicator {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+    }
+    
+    .voice-indicator {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+    }
+}
+
+/* Additional utility classes */
+.text-center {
+    text-align: center;
+}
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+
+.p-1 { padding: 0.5rem; }
+.p-2 { padding: 1rem; }
+.p-3 { padding: 1.5rem; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 0.5rem; }
+.gap-2 { gap: 1rem; }
+.gap-3 { gap: 1.5rem; }
+
+.grid { display: grid; }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+/* Loading animation for buttons */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+    }
+}
+
+/* Print styles for career plan */
+@media print {
+    .main-header,
+    .progress-container,
+    .action-buttons,
+    .voice-section,
+    .chat-input-container,
+    .modal-footer {
+        display: none !important;
+    }
+    
+    .modal {
+        position: static;
+        display: block !important;
+    }
+    
+    .modal-content {
+        box-shadow: none;
+        max-width: 100%;
+        max-height: none;
+    }
+    
+    .plan-section {
+        break-inside: avoid;
+        page-break-inside: avoid;
     }
 }
