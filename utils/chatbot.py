@@ -588,9 +588,9 @@ class CareerGuidanceCounselor:
         primary_career = career_plan.get("career_recommendation", {}).get("primary_career", "a technology career")
         
         messages = {
-            "en": f"✅ I've created a comprehensive career plan for you! I recommend **{primary_career}** as your primary path. The plan includes education requirements, skill development roadmap, financial planning, and application timeline. You can download it as a PDF or view the details here.",
-            "hi": f"✅ मैंने आपके लिए एक व्यापक करियर योजना बनाई है! मैं **{primary_career}** को आपके प्राथमिक मार्ग के रूप में सलाह देता हूँ। योजना में शिक्षा आवश्यकताएं, कौशल विकास रोडमैप, वित्तीय योजना और आवेदन समय सारणी शामिल है। आप इसे PDF के रूप में डाउनलोड कर सकते हैं या विवरण यहाँ देख सकते हैं।",
-            "hinglish": f"✅ Maine aapke liye ek comprehensive career plan banayi hai! Main **{primary_career}** ko aapke primary path ke taur par recommend karta hoon. Plan mein education requirements, skill development roadmap, financial planning, aur application timeline shamil hai. Aap ise PDF ke roop mein download kar sakte ho ya details yahan dekh sakte ho."
+            "en": f" I've created a comprehensive career plan for you! I recommend **{primary_career}** as your primary path. The plan includes education requirements, skill development roadmap, financial planning, and application timeline. You can download it as a PDF or view the details here.",
+            "hi": f" मैंने आपके लिए एक व्यापक करियर योजना बनाई है! मैं **{primary_career}** को आपके प्राथमिक मार्ग के रूप में सलाह देता हूँ। योजना में शिक्षा आवश्यकताएं, कौशल विकास रोडमैप, वित्तीय योजना और आवेदन समय सारणी शामिल है। आप इसे PDF के रूप में डाउनलोड कर सकते हैं या विवरण यहाँ देख सकते हैं।",
+            "hinglish": f" Maine aapke liye ek comprehensive career plan banayi hai! Main **{primary_career}** ko aapke primary path ke taur par recommend karta hoon. Plan mein education requirements, skill development roadmap, financial planning, aur application timeline shamil hai. Aap ise PDF ke roop mein download kar sakte ho ya details yahan dekh sakte ho."
         }
         return messages.get(self.current_language, messages["en"])
     
